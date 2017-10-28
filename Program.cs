@@ -32,25 +32,37 @@ namespace cblockchain
             // Create a few fake nodes for simulation
             for (var i = 0; i < 100; i++)
             {
-                _network.RegisterNode(new Node());
+                _network.RegisterNode(Guid.NewGuid().ToString());
             }
         }
 
         private static void SimulateActivity()
         {
             var random = new Random();
-            for (var i = 0; i < 1000; i++) 
+            var i = 0;
+            while(i < 1000)
             {
                 // Get random number
-                var randomIndex = random.Next(0, _network.Nodes.Count - 1);
+                var randomIndex = random.Next(0, _network.Nodes.Count);
+
+                // Get the node selected at random that wants to write to the block chain
+                var node = _network.Nodes[randomIndex];
 
                 // Create random transaction
-                var transaction = new Transaction(_network.Nodes[randomIndex].Id, "Random message with index:" + i.ToString());
+                var transaction = new Transaction(node.Id, "Random message with index:" + i.ToString());
 
                 // Write to the blockchain
-                Console.WriteLine("Writing block: {0}", i.ToString());
-                var block = _network.Write(transaction);
-                Console.WriteLine("Finished writing block: {0}", block.ToString());
+                var block = _network.Write(node, transaction);
+                if(block != null) 
+                {
+                    Console.WriteLine("Wrote block: {0}", i.ToString());
+                    i++;    
+                }
+                else 
+                {
+                    Console.WriteLine("Not enough credit to write block for {0}", node.Id);    
+                }
+
             }
         }
 
@@ -58,7 +70,7 @@ namespace cblockchain
         {
             foreach(var processor in _network.Nodes)
             {
-                Console.WriteLine("Node {0}: {1} credits accrued from {2} transactions processed.", processor.Id, processor.Credits, processor.ProcessedTransactionCount);
+                Console.WriteLine("Node {0}: {1} credits remaining from {2} transactions processed.", processor.Id, processor.Credits, processor.ProcessedTransactionCount);
             }
         }
     }

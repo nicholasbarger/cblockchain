@@ -7,7 +7,7 @@ namespace cblockchain
     public class Network
     {
         private List<Node> _nodes;
-        private static List<Block> _chain;
+        private List<Block> _chain;
 
         public List<Node> Nodes 
         {
@@ -23,24 +23,50 @@ namespace cblockchain
             _nodes = new List<Node>();
             _chain = new List<Block>();
 
-            // Create genesis block
-            var genesis = new Block()
+            // Give initial credit to first node
+            var genesisNode = new Node(_chain)
             {
-                Transaction = new Transaction(Guid.NewGuid().ToString(), "In the beginning...")
+                Credits = 100
+            };
+            _nodes.Add(genesisNode);
+
+            // Create genesis block
+            var genesisBlock = new Block()
+            {
+                Transaction = new Transaction(genesisNode.Id, "In the beginning...")
             };
 
             // Add genesis block to chain
-            _chain.Add(genesis);
+            _chain.Add(genesisBlock);
         }
 
-        public void RegisterNode(Node node)
+        public void RegisterNode(string id)
         {
+            // Apply the current chain to the node
+            var node = new Node(_chain)
+            {
+                Id = id
+            };
+
             // For now, just add to the collection
             _nodes.Add(node);
         }
 
-        public Block Write(ITransaction transaction)
+        public Block Write(Node from, ITransaction transaction)
         {
+            // Check node requesting the write, to see if they have enough
+            // credit to propose
+            if (from.Credits < 1)
+            {
+                // Todo: make a better return message telling the requestor
+                // they don't have enough credits yet.
+                return null;
+            }
+            else {
+                // Use 1 credit for the transaction
+                from.Credits--;
+            }
+
             // Get processors to participate
             var processors = ElectProcessorsFromNetwork();
 
@@ -79,7 +105,7 @@ namespace cblockchain
         private List<Node> ElectProcessorsFromNetwork()
         {
             // Set number to select to participate
-            var number = 3;
+            const int number = 5;
             var random = new Random();
             var processors = new List<Node>();
 

@@ -5,6 +5,8 @@ namespace cblockchain
 {
     public class Node
     {
+        private List<Block> _chain;
+
         /// <summary>
         /// The unique endpoint of this node.
         /// </summary>
@@ -25,8 +27,11 @@ namespace cblockchain
         public DateTimeOffset? LastTransactionDate { get; set; }
         public int ProcessedTransactionCount { get; set; }
 
-        public Node()
+        public Node(List<Block> chain)
         {
+            // assign a copy of the current chain to this node
+            this._chain = chain;
+
             // For simulation, let's just use a guid as the id for now
             this.Id = Guid.NewGuid().ToString();
         }
